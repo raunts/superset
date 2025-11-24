@@ -48,6 +48,21 @@ type FilterWithExtaFromData = Filter & {
   filterState?: FilterState;
 };
 
+const shouldPersistName = (dataMask: DataMask): boolean => {
+  const filterState = dataMask.filterState ?? {};
+  const value = filterState.value;
+  const hasValue =
+    Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null && value !== '';
+  const hasLabel =
+    Array.isArray(filterState.label) && filterState.label.length > 0
+      ? true
+      : Boolean(filterState.label);
+  const hasFilters = Object.keys(filterState.filters ?? {}).length > 0;
+  const hasExtraFormData = Object.keys(dataMask.extraFormData ?? {}).length > 0;
+
+  return hasValue || hasLabel || hasFilters || hasExtraFormData;
+};
+
 export function getInitialDataMask(
   id?: string | number,
   moreProps: DataMask = {},
@@ -70,7 +85,7 @@ function fillNativeFilters(
 ) {
   filterConfig.forEach((filter: Filter) => {
     const dataMask = initialDataMask || {};
-    mergedDataMask[filter.id] = {
+    let mergedFilter = {
       ...getInitialDataMask(filter.id), // take initial data
       ...filter.defaultDataMask, // if something new came from BE - take it
       ...dataMask[filter.id],
@@ -83,11 +98,17 @@ function fillNativeFilters(
         { ignoreUndefined: true },
       )
     ) {
-      mergedDataMask[filter.id] = {
-        ...mergedDataMask[filter.id],
+      mergedFilter = {
+        ...mergedFilter,
         ...filter.defaultDataMask,
       };
     }
+
+    const shouldAddName = shouldPersistName(mergedFilter);
+
+    mergedDataMask[filter.id] = shouldAddName
+      ? { ...mergedFilter, name: filter.name }
+      : { ...mergedFilter, name: undefined };
   });
 
   // Get back all other non-native filters
@@ -158,6 +179,9 @@ const dataMaskReducer = produce(
           ...draft[action.filterId],
           ...action.dataMask,
         };
+        if (!shouldPersistName(draft[action.filterId])) {
+          delete (draft[action.filterId] as DataMaskWithId).name;
+        }
         return draft;
       // TODO: update hydrate to .ts
       // @ts-ignore
@@ -242,3 +266,4 @@ const dataMaskReducer = produce(
 );
 
 export default dataMaskReducer;
+export { shouldPersistName };

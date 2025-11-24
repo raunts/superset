@@ -53,7 +53,7 @@ import { ChartCustomizationItem } from 'src/dashboard/components/nativeFilters/C
 
 import { useImmer } from 'use-immer';
 import { isEmpty, isEqual, debounce } from 'lodash';
-import { getInitialDataMask } from 'src/dataMask/reducer';
+import { getInitialDataMask, shouldPersistName } from 'src/dataMask/reducer';
 import { URL_PARAMS } from 'src/constants';
 import { applicationRoot } from 'src/utils/getBootstrapData';
 import { getUrlParam } from 'src/utils/urlUtils';
@@ -62,6 +62,7 @@ import { logEvent } from 'src/logger/actions';
 import { LOG_ACTIONS_CHANGE_DASHBOARD_FILTER } from 'src/logger/LogUtils';
 import { FilterBarOrientation, RootState } from 'src/dashboard/types';
 import { UserWithPermissionsAndRoles } from 'src/types/bootstrapTypes';
+import { NATIVE_FILTER_PREFIX } from '../FiltersConfigModal/utils';
 import { checkIsApplyDisabled } from './utils';
 import { FiltersBarProps } from './types';
 import {
@@ -312,7 +313,16 @@ const FilterBar: FC<FiltersBarProps> = ({
     // Apply filter changes
     Object.entries(dataMaskSelected).forEach(([filterId, dataMask]) => {
       if (dataMask) {
-        dispatch(updateDataMask(filterId, dataMask));
+        const filterDefinition = filters[filterId];
+        const shouldAddName =
+          typeof filterId === 'string' &&
+          filterId.startsWith(NATIVE_FILTER_PREFIX) &&
+          shouldPersistName(dataMask);
+        const { name: _name, ...rest } = dataMask;
+        const dataMaskWithName = shouldAddName
+          ? { ...dataMask, name: filterDefinition?.name }
+          : rest;
+        dispatch(updateDataMask(filterId, dataMaskWithName));
       }
     });
 
