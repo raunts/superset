@@ -108,7 +108,7 @@ function fillNativeFilters(
 
     mergedDataMask[filter.id] = shouldAddName
       ? { ...mergedFilter, name: filter.name }
-      : { ...mergedFilter, name: undefined };
+      : { ...mergedFilter };
   });
 
   // Get back all other non-native filters
