@@ -265,5 +265,4 @@ const dataMaskReducer = produce(
   {},
 );
 
-export default dataMaskReducer;
-export { shouldPersistName };
+export { dataMaskReducer as default, shouldPersistName };
