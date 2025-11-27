@@ -77,6 +77,9 @@ import Horizontal from './Horizontal';
 import Vertical from './Vertical';
 import { useSelectFiltersInScope } from '../state';
 
+type DataMaskWithOptionalName = DataMaskWithId & { name?: string };
+type DataMaskStateWithOptionalName = Record<string, DataMaskWithOptionalName>;
+
 // FilterBar is just being hidden as it must still
 // render fully due to encapsulated logics
 const HiddenFilterBar = styled.div`
@@ -158,7 +161,7 @@ const FilterBar: FC<FiltersBarProps> = ({
   const history = useHistory();
   const dataMaskApplied: DataMaskStateWithId = useNativeFiltersDataMask();
   const [dataMaskSelected, setDataMaskSelected] =
-    useImmer<DataMaskStateWithId>(dataMaskApplied);
+    useImmer<DataMaskStateWithOptionalName>(dataMaskApplied);
   const chartCustomizationItems = useSelector<RootState, any[]>(
     state => state.dashboardInfo.metadata?.chart_customization_config || [],
   );
@@ -229,7 +232,7 @@ const FilterBar: FC<FiltersBarProps> = ({
         }
 
         const baseDataMask = {
-          ...(getInitialDataMask(filter.id) as DataMaskWithId),
+          ...(getInitialDataMask(filter.id) as DataMaskWithOptionalName),
           ...dataMask,
         };
 
@@ -258,7 +261,7 @@ const FilterBar: FC<FiltersBarProps> = ({
 
   useEffect(() => {
     if (previousFilters && dashboardId === previousDashboardId) {
-      const updates: Record<string, DataMaskWithId> = {};
+      const updates: Record<string, DataMaskWithOptionalName> = {};
       Object.values(filters).forEach(currentFilter => {
         const previousFilter = previousFilters?.[currentFilter.id];
         if (!previousFilter) {
@@ -277,7 +280,7 @@ const FilterBar: FC<FiltersBarProps> = ({
         if (typeChanged || targetsChanged || dataMaskChanged) {
           updates[currentFilter.id] = getInitialDataMask(
             currentFilter.id,
-          ) as DataMaskWithId;
+          ) as DataMaskWithOptionalName;
         }
       });
 
