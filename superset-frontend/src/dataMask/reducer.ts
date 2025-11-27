@@ -48,11 +48,14 @@ type FilterWithExtaFromData = Filter & {
   filterState?: FilterState;
 };
 
+type DataMaskWithOptionalName = DataMaskWithId & { name?: string };
+
 const shouldPersistName = (dataMask: DataMask): boolean => {
   const filterState = dataMask.filterState ?? {};
-  const value = filterState.value;
-  const hasValue =
-    Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null && value !== '';
+  const { value } = filterState;
+  const hasValue = Array.isArray(value)
+    ? value.length > 0
+    : value !== undefined && value !== null && value !== '';
   const hasLabel =
     Array.isArray(filterState.label) && filterState.label.length > 0
       ? true
@@ -85,7 +88,7 @@ function fillNativeFilters(
 ) {
   filterConfig.forEach((filter: Filter) => {
     const dataMask = initialDataMask || {};
-    let mergedFilter = {
+    let mergedFilter: DataMaskWithOptionalName = {
       ...getInitialDataMask(filter.id), // take initial data
       ...filter.defaultDataMask, // if something new came from BE - take it
       ...dataMask[filter.id],
@@ -106,9 +109,11 @@ function fillNativeFilters(
 
     const shouldAddName = shouldPersistName(mergedFilter);
 
-    mergedDataMask[filter.id] = shouldAddName
+    const mergedFilterWithName: DataMaskWithOptionalName = shouldAddName
       ? { ...mergedFilter, name: filter.name }
       : { ...mergedFilter };
+
+    mergedDataMask[filter.id] = mergedFilterWithName;
   });
 
   // Get back all other non-native filters
@@ -180,7 +185,7 @@ const dataMaskReducer = produce(
           ...action.dataMask,
         };
         if (!shouldPersistName(draft[action.filterId])) {
-          delete (draft[action.filterId] as DataMaskWithId).name;
+          delete (draft[action.filterId] as DataMaskWithOptionalName).name;
         }
         return draft;
       // TODO: update hydrate to .ts
